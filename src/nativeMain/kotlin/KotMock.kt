@@ -15,22 +15,20 @@ open class KotMock : CommonKotMock {
 
     override fun clearFunctionList() = memberFunctionList.clear()
 
-    //TODO: use varargs instead of List<Any>
-    override fun <T> countFunctionCall(function: KFunction<Any?>, callArgs: List<Any?>) : T {
+    override fun <T> countFunctionCall(function: KFunction<Any?>, vararg args: Any?) : T {
         addFunctionToList(function)
         memberFunctionList.findFunction(function)?.let { functionCall ->
             functionCall.times += 1
-            if (callArgs.isNotEmpty()) functionCall.args.add(callArgs)
+            if (args.isNotEmpty()) functionCall.args.add(args.toList())
             return functionCall.returnOrThrow() as T
         } ?: throw Exception("Failed to retrieve function")
     }
 
-    //TODO: use varargs instead of List<Any>
-    override fun verify(function: KFunction<Any?>?, times: Int, args: List<Any?>) {
+    override fun verify(function: KFunction<Any?>?, vararg args: Any?, times: Int) {
         function?.let {
             memberFunctionList.findFunction(it)?.let { functionCall ->
                 if (args.isNotEmpty()) {
-                    checkThatArgsMatch(args, times, functionCall, function.name)
+                    checkThatArgsMatch(args.toList(), times, functionCall, function.name)
                     return
                 }
                 checkThatTimesMatch(times, functionCall, function.name)

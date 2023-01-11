@@ -10,19 +10,19 @@ class KotMockTest {
           return countFunctionCall(::functionWithoutArgsOrReturn)
         }
         fun functionWithArgNoReturn(number: Int){
-            return countFunctionCall(::functionWithArgNoReturn, listOf(number))
+            return countFunctionCall(::functionWithArgNoReturn, number)
         }
         fun functionWithArgsNoReturn(number: Int, string: String, boolean: Boolean){
-            return countFunctionCall(::functionWithArgsNoReturn, listOf(number, string, boolean))
+            return countFunctionCall(::functionWithArgsNoReturn, number, string, boolean)
         }
         fun functionWithoutArgsReturn(): Int {
             return countFunctionCall(::functionWithoutArgsReturn)
         }
         fun functionWithArgsReturn(number: Int, string: String, boolean: Boolean): Int {
-            return countFunctionCall(::functionWithArgsReturn, listOf(number, string, boolean))
+            return countFunctionCall(::functionWithArgsReturn, number, string, boolean)
         }
         fun functionWithNullableArgsAndReturn(number: Int?, string: String?, boolean: Boolean?): Int? {
-            return countFunctionCall(::functionWithNullableArgsAndReturn, listOf(number, string, boolean))
+            return countFunctionCall(::functionWithNullableArgsAndReturn, number, string, boolean)
         }
     }
 
@@ -95,7 +95,7 @@ class KotMockTest {
         val function = kotMockImpl::functionWithArgNoReturn
         val expected = FunctionCall(function,1, mutableListOf(listOf(1)))
 
-        kotMockImpl.countFunctionCall<Unit>(function, listOf(1))
+        kotMockImpl.countFunctionCall<Unit>(function, 1)
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -106,7 +106,7 @@ class KotMockTest {
         val function = kotMockImpl::functionWithArgsNoReturn
         val expected = FunctionCall(function, 1, mutableListOf(listOf(1, "hello", true)))
 
-        kotMockImpl.countFunctionCall<Unit>(function, listOf(1, "hello", true))
+        kotMockImpl.countFunctionCall<Unit>(function, 1, "hello", true)
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -152,7 +152,7 @@ class KotMockTest {
         kotMockImpl.whenever(function).thenReturn(null)
         kotMockImpl.functionWithNullableArgsAndReturn(null, null, null)
 
-        kotMockImpl.verify(function, args = listOf(null, null, null))
+        kotMockImpl.verify(function, null, null, null)
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -179,7 +179,7 @@ class KotMockTest {
         kotMockImpl.functionWithoutArgsOrReturn()
         kotMockImpl.functionWithoutArgsOrReturn()
 
-        kotMockImpl.verify(function, 3)
+        kotMockImpl.verify(function, times = 3)
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -212,7 +212,7 @@ class KotMockTest {
         kotMockImpl.whenever(function).thenReturn(3)
         kotMockImpl.functionWithArgsReturn(1, "hello", true)
 
-        kotMockImpl.verify(function, args = listOf(1, "hello", true))
+        kotMockImpl.verify(function, 1, "hello", true)
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -225,7 +225,7 @@ class KotMockTest {
         kotMockImpl.whenever(function).thenReturn(1)
         kotMockImpl.functionWithArgsReturn(1, "hello", true)
 
-        assertFails { kotMockImpl.verify(function, args = listOf(2, "goodbye", false)) }
+        assertFails { kotMockImpl.verify(function, 2, "goodbye", false) }
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -238,7 +238,7 @@ class KotMockTest {
         kotMockImpl.functionWithArgsNoReturn(1, "hello", true)
         kotMockImpl.functionWithArgsNoReturn(1, "hello", true)
 
-        assertFails { kotMockImpl.verify(function, times = 2, args = listOf(2, "goodbye", false)) }
+        assertFails { kotMockImpl.verify(function, 2, "goodbye", false, times = 2) }
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
@@ -251,7 +251,7 @@ class KotMockTest {
         kotMockImpl.whenever(function).thenReturn(4)
         kotMockImpl.functionWithArgsReturn(1, "hello", true)
 
-        assertFails { kotMockImpl.verify(function, times = 2, args = listOf(1, "hello", true)) }
+        assertFails { kotMockImpl.verify(function, 1, "hello", true, times = 2) }
 
         assertContains(kotMockImpl.memberFunctionList, expected)
     }
