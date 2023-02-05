@@ -22,8 +22,20 @@ data class FunctionCall(
         } ?: addIfTypeIsNullable(value)
     }
 
+    override infix fun thenThrow(value: Throwable) {
+        answers.add(Answer(value, true))
+    }
+
+
     private fun addIfTypeIsNullable(value: Any?) {
         if (returnType.isMarkedNullable) answers.add(Answer(value)) else throw NullPointerException("Provided returnType of $returnType is not nullable")
+    }
+
+    //TODO: Make responses more verbose
+    override fun returnOrThrow(): Any? {
+        return answers.firstOrNull { (value, toBeThrown) ->
+            return provideAnswer(toBeThrown, value)
+        } ?: returnUnitOrFail()
     }
 
     private fun addIfTypesafe(it: Any) {
@@ -32,17 +44,6 @@ data class FunctionCall(
             return
         }
         throw ReturnTypeException("Provided returnType of ${returnType.classifier} does not match value of $it. $it is of type ${it::class.simpleName}")
-    }
-
-    override infix fun thenThrow(value: Throwable) {
-        answers.add(Answer(value, true))
-    }
-
-    //TODO: Make responses more verbose
-    override fun returnOrThrow(): Any? {
-       return answers.firstOrNull { (value, toBeThrown) ->
-           return provideAnswer(toBeThrown, value)
-        } ?: returnUnitOrFail()
     }
 
     private fun provideAnswer(toBeThrown: Boolean, value: Any?): Any? {
@@ -59,14 +60,13 @@ data class FunctionCall(
     }
 
     private fun returnUnitOrFail() {
-        if (returnType.classifier == Unit::class) return else throw ReturnTypeException("Return value is either not of type $returnType, non-existant, or, if it is a Throwable, is not set to be thrown.")
+        if (returnType.classifier == Unit::class) return
+        else throw ReturnTypeException("Return value is either not of type $returnType, non-existant, or, if it is a Throwable, is not set to be thrown.")
     }
 
-    override fun wasCalledWith(providedArgs: List<Any?>, times: Int): Pair<Boolean, Int> {
-        args.count { providedArgs == it }.let { count ->
-            return Pair(count == times, count)
-        }
-    }
+    override fun wasCalledWith(providedArgs: List<Any?>): Int = args.count { providedArgs == it }
+
+    override fun functionName(): String = function.name
 }
 
 

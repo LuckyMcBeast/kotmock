@@ -1,65 +1,71 @@
 package native
 
 import common.FailedVerificationException
+import common.VerificationType
+import common.findFunction
 import kotlin.reflect.KFunction
 import common.KotMock as CommonKotMock
 import common.FunctionCall as CommonFunctionCall
+import common.Verification as CommonVerification
 
 @Suppress("UNCHECKED_CAST")
 open class KotMock : CommonKotMock {
-    override val memberFunctionList : MutableList<CommonFunctionCall> = mutableListOf()
+
+    override val memberFunctionList: MutableList<CommonFunctionCall> = mutableListOf()
+    override var verification: CommonVerification? = null
 
     override fun addFunctionToList(function: KFunction<Any?>) {
-        if(memberFunctionList.none { it.function == function }) memberFunctionList.add(FunctionCall(function = function))
+        if (memberFunctionList.none { it.function == function }) memberFunctionList.add(FunctionCall(function = function))
     }
 
     override fun clearFunctionList() = memberFunctionList.clear()
 
-    override fun <T> countFunctionCall(function: KFunction<Any?>, vararg args: Any?) : T {
+    override fun <T> handleFunctionCall(function: KFunction<Any?>, vararg args: Any?): T {
+        verification?.let { verification ->
+            return verifyFunctionCall(verification, function, args.toList()) as T
+        } ?: run {
+            return countFunctionCall(function, args.toList())
+        }
+    }
+
+    private fun verifyFunctionCall(
+        verification: CommonVerification,
+        function: KFunction<Any?>,
+        args: List<Any?>
+    ) {
+        memberFunctionList.findFunction(function)?.let { functionCall ->
+            verification.apply {
+                this.functionCall = functionCall
+                this.args = args
+            }.wasCalled()
+            this.verification = null
+        } ?: throw FailedVerificationException("No interactions with ${function.name} were found")
+    }
+
+    private fun <T> countFunctionCall(function: KFunction<Any?>, args: List<Any?>) : T {
         addFunctionToList(function)
         memberFunctionList.findFunction(function)?.let { functionCall ->
             functionCall.times += 1
-            if (args.isNotEmpty()) functionCall.args.add(args.toList())
+            if (args.isNotEmpty()) functionCall.args.add(args)
             return functionCall.returnOrThrow() as T
         } ?: throw Exception("Failed to retrieve function")
     }
 
-    override fun verify(function: KFunction<Any?>?, vararg args: Any?, times: Int) {
-        function?.let {
-            memberFunctionList.findFunction(it)?.let { functionCall ->
-                if (args.isNotEmpty()) {
-                    checkThatArgsMatch(args.toList(), times, functionCall, function.name)
-                    return
-                }
-                checkThatTimesMatch(times, functionCall, function.name)
-            } ?: throw FailedVerificationException("No interactions with ${function.name} were found")
-        } ?: checkTotalInteractions(times)
-    }
-
-    override fun checkTotalInteractions(times: Int) {
-        var actualTimes = 0
-        memberFunctionList.forEach { entry ->
-            actualTimes += entry.times
-        }
-        if (times != actualTimes) throw FailedVerificationException("$actualTimes total interactions ${this::class.simpleName} were found, wanted $times")
-    }
-
-    override fun checkThatArgsMatch(args: List<Any?>, times: Int, functionCall: CommonFunctionCall, functionName : String) {
-        functionCall.wasCalledWith(args, times).let { (match, count) ->
-            if(!match) throw FailedVerificationException("$count interactions with $functionName with args of $args found, wanted $times")
-        }
-
-    }
-
-    override fun checkThatTimesMatch(times: Int, functionCall: CommonFunctionCall, functionName: String) {
-        if (functionCall.times != times) throw FailedVerificationException("${functionCall.times} interactions with $functionName were found, wanted $times")
-    }
-
-    override fun whenever(function: KFunction<Any?>) : CommonFunctionCall {
+    override fun whenever(function: KFunction<Any?>): CommonFunctionCall {
         addFunctionToList(function)
-        return memberFunctionList.findFunction(function)?: throw Exception("Failed to retrieve function")
+        return memberFunctionList.findFunction(function) ?: throw Exception("Failed to retrieve function")
     }
 
-    private fun MutableList<CommonFunctionCall>.findFunction(function: KFunction<Any?>) =
-        find { it.function == function }
+    override fun <T : CommonKotMock> enableVerificationMode(times: Int, type: VerificationType): T {
+        this.verification = Verification(kotMock = this, type = type, times = times)
+        return this as T
+    }
+
+    fun wasCalled() {
+        verification?.let { verification ->
+            verification.wasCalled()
+            this.verification = null
+            return
+        }
+    }
 }

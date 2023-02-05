@@ -12,5 +12,6 @@ interface FunctionCall {
     infix fun thenReturn(value: Any?)
     infix fun thenThrow(value: Throwable)
     fun returnOrThrow(): Any?
-    fun wasCalledWith(providedArgs: List<Any?>, times: Int = 1): Pair<Boolean, Int>
+    fun wasCalledWith(providedArgs: List<Any?>): Int
+    fun functionName(): String
 }

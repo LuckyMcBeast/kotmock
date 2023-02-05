@@ -5,19 +5,21 @@ import kotlin.test.*
 class FunctionCallTest {
 
     @Test
-    fun `should return true if called with same args`() {
+    fun `should return count if called with same args`() {
         val functionCall = FunctionCall(function = DummyClass::noReturn)
         functionCall.args.add(listOf(1, true, "hello"))
+        functionCall.args.add(listOf(1, true, "hello"))
 
-        assertTrue { functionCall.wasCalledWith(listOf(1, true, "hello")).first }
+        assertTrue { functionCall.wasCalledWith(listOf(1, true, "hello")) == 2 }
     }
 
     @Test
     fun `should return false if was not called with same args`() {
         val functionCall = FunctionCall(function = DummyClass::noReturn)
         functionCall.args.add(listOf(2, false))
+        functionCall.args.add(listOf(1, true, "goodbye"))
 
-        assertFalse { functionCall.wasCalledWith(listOf(1, true, "hello")).first }
+        assertFalse { functionCall.wasCalledWith(listOf(1, true, "hello")) == 1 }
     }
 
     @Test
@@ -25,29 +27,11 @@ class FunctionCallTest {
         val functionCall = FunctionCall(function = DummyClass::noReturn)
         functionCall.args.add(listOf(true, 1, "hello"))
 
-        assertFalse { functionCall.wasCalledWith(listOf(1, true, "hello")).first }
+        assertFalse { functionCall.wasCalledWith(listOf(1, true, "hello")) == 1 }
     }
 
     @Test
-    fun `should return true if called with same args for the amount of times specified`() {
-        val functionCall = FunctionCall(function = DummyClass::noReturn)
-        functionCall.args.add(listOf(1, true, "hello"))
-        functionCall.args.add(listOf(1, true, "hello"))
-
-        assertTrue { functionCall.wasCalledWith(listOf(1, true, "hello"), 2).first }
-    }
-
-    @Test
-    fun `should return false if called with same args but not for the amount of times specified`() {
-        val functionCall = FunctionCall(function = DummyClass::noReturn)
-        functionCall.args.add(listOf(1, true, "hello"))
-        functionCall.args.add(listOf(1, true, "hello"))
-
-        assertFalse { functionCall.wasCalledWith(listOf(1, true, "hello"), 1).first }
-    }
-
-    @Test
-    fun `should set returns if value matches  function = `() {
+    fun `should set returns if value matches function returnType`() {
         val functionCall = FunctionCall(function = DummyClass::functionThatReturnsInt)
 
         functionCall.thenReturn(4)
