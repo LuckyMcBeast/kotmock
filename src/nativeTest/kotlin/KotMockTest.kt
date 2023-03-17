@@ -94,7 +94,7 @@ class KotMockTest : WithKotMock() {
     fun `should return stored return value whenever`(){
         val kotMockImpl = KotMockImpl()
 
-        kotMockImpl whenever kotMockImpl::functionWithoutArgsReturn thenReturn 4
+        kotMockImpl.apply { whenever(::functionWithoutArgsReturn) thenReturn 4 }
 
         assertEquals(4, kotMockImpl.functionWithoutArgsReturn())
     }
@@ -103,7 +103,9 @@ class KotMockTest : WithKotMock() {
     fun `should return throw provided value whenever is throwable`(){
         val kotMockImpl = KotMockImpl()
 
-        with(kotMockImpl) { this whenever ::functionWithoutArgsReturn thenThrow NullPointerException() }
+        kotMockImpl.apply {
+            whenever(::functionWithoutArgsReturn) thenThrow NullPointerException()
+        }
 
         assertFailsWith<NullPointerException> { kotMockImpl.functionWithoutArgsReturn() }
     }
@@ -119,7 +121,7 @@ class KotMockTest : WithKotMock() {
     @Test
     fun `should throw exception if return type is not nullable and null is provided`(){
         assertFailsWith<NullPointerException> {
-            with(KotMockImpl()) { this whenever ::functionWithoutArgsReturn thenReturn null }
+            KotMockImpl().apply { whenever(::functionWithoutArgsReturn) thenReturn null }
         }
     }
 }

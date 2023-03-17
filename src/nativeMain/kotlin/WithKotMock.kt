@@ -14,5 +14,8 @@ open class WithKotMock {
 }
 
 
-//verify kotMock.function(arg1, arg2) wasCalled 3
-//whenever(kotMock).function(arg1,arg2) thenReturn 5
+//verify(kotMockImpl, times = 2).functionThatHasInt(1) <- Good to Go
+
+//Desired: whenever(kotMock).function(arg1,arg2) thenReturn 5
+//Interim: kotMockImpl.apply { whenever(::functionWithArgsAndReturn).withArgs() thenReturn 1 }
+//Current: kotMockImpl.apply { whenever(::functionWithoutArgsAndReturn) thenReturn 1 }
